@@ -1,0 +1,6 @@
+{
+  "name": "WMS Pro - Phase 1 Order Management",
+  "description": "Warehouse Management System for inventory health, shortage calculation, and automated supplier reorder generation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
