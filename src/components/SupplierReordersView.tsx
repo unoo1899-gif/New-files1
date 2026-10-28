@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { CalculatedSKU } from '../utils/wmsCalculator';
+import { CalculatedItem } from '../utils/wmsCalculator';
 import { Truck, DollarSign, Send, CheckCircle2, FileText, Printer, Building2, Package } from 'lucide-react';
 
 interface SupplierReordersViewProps {
-  items: CalculatedSKU[];
-  onSimulatePoPlacement: (skus: { sku: string; orderedQty: number }[]) => void;
+  items: CalculatedItem[];
+  onSimulatePoPlacement: (items: { isbn: string; orderedQty: number }[]) => void;
 }
 
 export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
@@ -32,16 +32,39 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
     acc[item.supplier].totalCost += item.totalOrderCost;
     acc[item.supplier].totalUnits += item.reorderQuantity;
     return acc;
-  }, {} as Record<string, { supplier: string; leadTimeDays: number; items: CalculatedSKU[]; totalCost: number; totalUnits: number }>);
+  }, {} as Record<string, { supplier: string; leadTimeDays: number; items: CalculatedItem[]; totalCost: number; totalUnits: number }>);
 
   const suppliersList = Object.values(supplierGroups);
 
-  const handlePlaceOrder = (supplierName: string, supplierItems: CalculatedSKU[]) => {
-    const updates = supplierItems.map(i => ({ sku: i.sku, orderedQty: i.reorderQuantity }));
+  const handlePlaceOrder = (supplierName: string, supplierItems: CalculatedItem[], poNumber: string) => {
+    const updates = supplierItems.map(i => ({ isbn: i.isbn, orderedQty: i.reorderQuantity }));
     onSimulatePoPlacement(updates);
     setOrderedSuppliers(prev => ({ ...prev, [supplierName]: true }));
-    setSuccessMessage(`Purchase Order successfully generated and transmitted to ${supplierName}! (Added to Extra PO Stock buffer)`);
+    setSuccessMessage(`Purchase Order ${poNumber} successfully generated and transmitted to ${supplierName}! (Added to Extra PO Stock buffer)`);
     setTimeout(() => setSuccessMessage(null), 5000);
+  };
+
+  const downloadPoCsv = (supplierName: string, poNumber: string, itemsList: CalculatedItem[], leadTime: number) => {
+    const headers = ['PO Number', 'Supplier', 'ISBN', 'Title', 'Lead Time (Days)', 'Reorder Quantity', 'Unit Cost ($)', 'Line Total ($)'];
+    const rows = itemsList.map(item => [
+      poNumber,
+      `"${supplierName}"`,
+      item.isbn,
+      `"${item.title}"`,
+      leadTime,
+      item.reorderQuantity,
+      item.unitCost,
+      item.totalOrderCost.toFixed(2)
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `${poNumber}_${supplierName.replace(/\s+/g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const grandTotalCost = suppliersList.reduce((acc, s) => acc + s.totalCost, 0);
@@ -55,10 +78,10 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
           <div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center space-x-2">
               <Truck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              <span>Supplier Reorder Management (Phase 1 Action Module)</span>
+              <span>Supplier Reorder Management (Minimum Qty.xlsx)</span>
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Aggregating items with positive deficit values (&gt; 0) and grouping by supplier to generate purchase orders.
+              Aggregating items with positive deficit values (&gt; 0) and grouping by publisher to generate purchase orders.
             </p>
           </div>
 
@@ -70,7 +93,7 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
               </div>
             </div>
             <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
-              ${grandTotalUnits}
+              {grandTotalUnits}
             </div>
           </div>
         </div>
@@ -91,7 +114,7 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
           </div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">All Stock Levels are Sufficient!</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
-            There are currently no items with a positive net deficit. No supplier purchase orders are required at this time.
+            There are currently no items with a positive net deficit against the minimum quantity threshold of 50.
           </p>
         </div>
       ) : (
@@ -119,7 +142,7 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Estimated Lead Time: <span className="font-semibold text-slate-700 dark:text-slate-300">{group.leadTimeDays} business days</span> &bull; {group.items.length} SKUs requiring replenishment
+                        Estimated Lead Time: <span className="font-semibold text-slate-700 dark:text-slate-300">{group.leadTimeDays} business days</span> &bull; {group.items.length} titles requiring replenishment
                       </p>
                     </div>
                   </div>
@@ -132,17 +155,28 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handlePlaceOrder(group.supplier, group.items)}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md transition-all flex items-center space-x-2 ${
-                        isOrdered
-                          ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
-                          : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30'
-                      }`}
-                    >
-                      <Send className="w-4 h-4" />
-                      <span>{isOrdered ? 'PO Transmitted (Resend)' : 'Generate & Transmit PO'}</span>
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => downloadPoCsv(group.supplier, poNumber, group.items, group.leadTimeDays)}
+                        className="px-3 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-sm font-medium transition-all flex items-center space-x-1.5"
+                        title="Download Purchase Order CSV"
+                      >
+                        <FileText className="w-4 h-4" />
+                        <span>Download PO</span>
+                      </button>
+
+                      <button
+                        onClick={() => handlePlaceOrder(group.supplier, group.items, poNumber)}
+                        className={`px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md transition-all flex items-center space-x-2 ${
+                          isOrdered
+                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
+                            : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30'
+                        }`}
+                      >
+                        <Send className="w-4 h-4" />
+                        <span>{isOrdered ? 'PO Transmitted (Resend)' : 'Generate & Transmit PO'}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -151,8 +185,8 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-semibold uppercase tracking-wider text-slate-400 bg-white dark:bg-slate-900">
-                        <th className="py-3 px-5">SKU & Item Name</th>
-                        <th className="py-3 px-5 text-center">Min Required</th>
+                        <th className="py-3 px-5">ISBN & Title</th>
+                        <th className="py-3 px-5 text-center">Minimum Qty</th>
                         <th className="py-3 px-5 text-center">Current Stock</th>
                         <th className="py-3 px-5 text-center">Extra PO Buffer</th>
                         <th className="py-3 px-5 text-center">Deficit Qty (To Order)</th>
@@ -163,11 +197,11 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50 text-sm">
                       {group.items.map((item) => (
                         <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                          <td className="py-3 px-5">
-                            <div className="font-semibold text-slate-900 dark:text-white">{item.sku}</div>
-                            <div className="text-xs text-slate-500">{item.name}</div>
+                          <td className="py-3 px-5 max-w-md">
+                            <div className="font-mono font-bold text-slate-900 dark:text-white text-xs">{item.isbn}</div>
+                            <div className="text-xs text-slate-700 dark:text-slate-300 font-medium mt-0.5">{item.title}</div>
                           </td>
-                          <td className="py-3 px-5 text-center font-mono">{item.minRequiredStock}</td>
+                          <td className="py-3 px-5 text-center font-mono">{item.minimumQty}</td>
                           <td className="py-3 px-5 text-center font-mono text-slate-600 dark:text-slate-400">{item.stockBalance}</td>
                           <td className="py-3 px-5 text-center font-mono text-indigo-600 dark:text-indigo-400">+{item.extraPoStock}</td>
                           <td className="py-3 px-5 text-center font-mono font-bold text-rose-600 dark:text-rose-400">

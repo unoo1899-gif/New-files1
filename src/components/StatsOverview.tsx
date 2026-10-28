@@ -30,13 +30,13 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
           <div className="space-y-2">
             <div className="flex items-center space-x-2 text-indigo-400 font-semibold text-sm">
               <Calculator className="w-4 h-4" />
-              <span>Phase 1 Replenishment Calculation Engine</span>
+              <span>Minimum Qty.xlsx Replenishment Calculation Engine</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Warehouse Stock & Order Management
+              Warehouse Inventory & Order Management
             </h1>
             <p className="text-slate-300 text-sm max-w-2xl">
-              Evaluating inventory health by comparing Minimum Required Stock against physical Stock Balance and incoming Extra PO Stock.
+              Evaluating 36 textbook titles against the Minimum Qty threshold (50 copies) and tracking incoming PO buffers.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -61,14 +61,14 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
           <div className="bg-slate-800/60 rounded-xl p-3.5 border border-slate-700/60">
             <div className="text-xs text-slate-400 font-medium">Core Formula</div>
             <div className="text-sm sm:text-base font-bold text-indigo-300 mt-1 font-mono">
-              Net Deficit = Min Required - Stock - PO
+              Net Deficit = Minimum Qty - Stock - PO
             </div>
           </div>
           <div className="bg-slate-800/60 rounded-xl p-3.5 border border-slate-700/60">
             <div className="text-xs text-slate-400 font-medium">Deficit Trigger (&gt; 0)</div>
             <div className="text-sm font-semibold text-rose-400 mt-1 flex items-center space-x-1.5">
               <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-              <span>Flags shortage & calculates exact reorder quantity</span>
+              <span>Flags shortage & calculates reorder quantity</span>
             </div>
           </div>
           <div className="bg-slate-800/60 rounded-xl p-3.5 border border-slate-700/60">
@@ -83,17 +83,17 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
 
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total SKUs */}
+        {/* Total Titles */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total SKUs</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Book Titles</span>
             <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center">
               <Package className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-4 flex items-baseline justify-between">
             <div className="text-3xl font-bold text-slate-900 dark:text-white">{totalSkus}</div>
-            <span className="text-xs text-slate-500 dark:text-slate-400">Active catalog items</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">From Minimum Qty.xlsx</span>
           </div>
         </div>
 

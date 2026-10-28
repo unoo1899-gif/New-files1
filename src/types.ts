@@ -1,11 +1,11 @@
-export interface SKUItem {
+export interface InventoryItem {
   id: string;
-  sku: string;
-  name: string;
+  isbn: string;
+  title: string;
   category: string;
   unit: string;
   unitCost: number;
-  minRequiredStock: number;
+  minimumQty: number;
   stockBalance: number;
   extraPoStock: number;
   supplier: string;
@@ -14,12 +14,12 @@ export interface SKUItem {
 }
 
 export interface StockBalanceUploadRow {
-  sku: string;
+  isbn: string;
   stockBalance: number;
 }
 
 export interface ExtraPoUploadRow {
-  sku: string;
+  isbn: string;
   extraPoStock: number;
 }
 

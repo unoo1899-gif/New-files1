@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { CalculatedSKU } from '../utils/wmsCalculator';
+import { CalculatedItem } from '../utils/wmsCalculator';
 import { Sparkles, X, BrainCircuit, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react';
 
 interface AiInsightsModalProps {
-  items: CalculatedSKU[];
+  items: CalculatedItem[];
   onClose: () => void;
 }
 
@@ -18,26 +18,25 @@ export const AiInsightsModal: React.FC<AiInsightsModalProps> = ({ items, onClose
     setError(null);
 
     try {
-      // Initialize GoogleGenAI
       const apiKey = process.env.GEMINI_API_KEY || (window as any).GEMINI_API_KEY || '';
       const ai = new GoogleGenAI({ apiKey });
 
       const deficitItems = items.filter(i => i.isDeficit);
       const totalCost = deficitItems.reduce((acc, i) => acc + i.totalOrderCost, 0);
 
-      const prompt = `You are an expert Supply Chain and Warehouse Management AI Advisor. 
-Analyze the following WMS Phase 1 inventory data and provide strategic recommendations:
+      const prompt = `You are an expert Supply Chain and Inventory Management AI Advisor for educational book publishing & distribution. 
+Analyze the following WMS Minimum Qty inventory data (36 textbook titles with minimum quantity threshold = 50) and provide strategic recommendations:
 
-Total SKUs: ${items.length}
-Items with Shortages (Reorder Required): ${deficitItems.length}
+Total Titles: ${items.length}
+Titles with Shortages (Reorder Required): ${deficitItems.length}
 Total Reorder Cost: $${totalCost.toFixed(2)}
 
-Deficit Items Detail:
+Deficit Titles Detail:
 ${JSON.stringify(deficitItems.map(i => ({
-  sku: i.sku,
-  name: i.name,
+  isbn: i.isbn,
+  title: i.title,
   category: i.category,
-  minRequired: i.minRequiredStock,
+  minimumQty: i.minimumQty,
   stockBalance: i.stockBalance,
   extraPo: i.extraPoStock,
   deficit: i.reorderQuantity,
@@ -46,9 +45,9 @@ ${JSON.stringify(deficitItems.map(i => ({
 })), null, 2)}
 
 Please provide:
-1. Executive summary of inventory health and risk areas.
-2. Prioritized supplier reorder recommendations (considering lead times and critical stockouts).
-3. Warehouse buffer stock optimization tips.
+1. Executive summary of inventory health and risk areas for curriculum stock.
+2. Prioritized publisher reorder recommendations (considering lead times and upcoming academic term stockouts).
+3. Textbook buffer stock optimization tips.
 
 Format your response cleanly with clear headings and bullet points in Markdown.`;
 
@@ -61,20 +60,18 @@ Format your response cleanly with clear headings and bullet points in Markdown.`
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to connect to Gemini API. Ensure GEMINI_API_KEY is configured.');
-      // Provide intelligent fallback analysis if API call fails
-      setAnalysis(`### Warehouse AI Operational Analysis (Offline Mode / Fallback)
+      setAnalysis(`### Textbook Inventory AI Operational Analysis (Fallback Mode)
 
 1. **Executive Summary**: 
-   - You currently have **${items.filter(i => i.isDeficit).length} items** in stock deficit across your warehouse catalog.
-   - Immediate replenishment is required to avoid stockouts on high-velocity SKUs.
+   - You currently have **${items.filter(i => i.isDeficit).length} textbook titles** in stock deficit against the minimum quantity threshold of 50.
+   - Immediate reorder with publishers (Cambridge & Oxford University Press) is recommended to prevent backorders.
 
-2. **Supplier Reorder Priorities**:
-   - Focus on suppliers with longer lead times (e.g., Delta Industrial Metals, Apex Energy Corp) to prevent operational downtime.
-   - Ensure incoming Extra PO stock buffers are tracked closely upon dock arrival.
+2. **Publisher Reorder Priorities**:
+   - Focus on titles with longer lead times and zero incoming PO stock.
+   - Track incoming shipments closely to ensure adequate buffer before semester rush.
 
 3. **Optimization Tips**:
-   - Adjust minimum required stock thresholds based on seasonal demand spikes.
-   - Consolidate purchase orders per supplier to minimize freight overhead.`);
+   - Standardize safety stock thresholds across Cambridge Primary and Oxford International math & English series.`);
     } finally {
       setLoading(false);
     }
@@ -94,8 +91,8 @@ Format your response cleanly with clear headings and bullet points in Markdown.`
               <Sparkles className="w-5 h-5 text-purple-200" />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-white">Gemini AI Warehouse Intelligence</h3>
-              <p className="text-xs text-slate-400">Automated stock health & reorder strategy advisor</p>
+              <h3 className="font-bold text-lg text-white">Gemini AI Textbook Intelligence</h3>
+              <p className="text-xs text-slate-400">Minimum Qty stock health & publisher reorder strategy advisor</p>
             </div>
           </div>
           <button
@@ -111,7 +108,7 @@ Format your response cleanly with clear headings and bullet points in Markdown.`
           {loading ? (
             <div className="py-16 text-center space-y-4">
               <div className="w-12 h-12 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin mx-auto"></div>
-              <p className="text-sm font-medium text-slate-300">Analyzing warehouse inventory levels & calculating supply chain risks...</p>
+              <p className="text-sm font-medium text-slate-300">Analyzing textbook inventory levels & publishing supply chain risks...</p>
             </div>
           ) : (
             <div className="space-y-4">

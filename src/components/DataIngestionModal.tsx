@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import Papa from 'papaparse';
-import { SKUItem } from '../types';
+import { InventoryItem } from '../types';
 import { SAMPLE_STOCK_BALANCE_CSV, SAMPLE_EXTRA_PO_CSV } from '../data/initialData';
 import { Database, PackagePlus, Upload, FileText, CheckCircle2, AlertCircle, ArrowRight, Download } from 'lucide-react';
 
 interface DataIngestionModalProps {
-  items: SKUItem[];
-  onApplyStockBalance: (updates: { sku: string; stockBalance: number }[]) => void;
-  onApplyExtraPo: (updates: { sku: string; extraPoStock: number }[]) => void;
+  items: InventoryItem[];
+  onApplyStockBalance: (updates: { isbn: string; stockBalance: number }[]) => void;
+  onApplyExtraPo: (updates: { isbn: string; extraPoStock: number }[]) => void;
   onClose?: () => void;
 }
 
@@ -21,12 +21,12 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
   // Stock balance state
   const [stockCsvText, setStockCsvText] = useState('');
   const [stockStatusMessage, setStockStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [parsedStockRows, setParsedStockRows] = useState<{ sku: string; stockBalance: number; found: boolean; name?: string }[]>([]);
+  const [parsedStockRows, setParsedStockRows] = useState<{ isbn: string; stockBalance: number; found: boolean; title?: string }[]>([]);
 
   // Extra PO state
   const [poCsvText, setPoCsvText] = useState('');
   const [poStatusMessage, setPoStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [parsedPoRows, setParsedPoRows] = useState<{ sku: string; extraPoStock: number; found: boolean; name?: string }[]>([]);
+  const [parsedPoRows, setParsedPoRows] = useState<{ isbn: string; extraPoStock: number; found: boolean; title?: string }[]>([]);
 
   // Handle Stock CSV Parse
   const handleParseStockCsv = (csvString: string) => {
@@ -37,22 +37,23 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
         try {
           const rows = results.data as any[];
           const formatted = rows.map(row => {
-            const sku = (row.sku || row.SKU || '').trim();
-            const balance = Number(row.stockBalance || row.StockBalance || row.balance || 0);
-            const matchedItem = items.find(i => i.sku.toLowerCase() === sku.toLowerCase());
+            const isbn = (row.isbn || row.ISBN || row.sku || row.SKU || '').trim();
+            let balance = Number(row.stockBalance || row.StockBalance || row.balance || 0);
+            if (isNaN(balance) || balance < 0) balance = 0;
+            const matchedItem = items.find(i => i.isbn.toLowerCase() === isbn.toLowerCase());
             return {
-              sku,
-              stockBalance: isNaN(balance) ? 0 : balance,
+              isbn,
+              stockBalance: balance,
               found: !!matchedItem,
-              name: matchedItem ? matchedItem.name : 'Unknown SKU'
+              title: matchedItem ? matchedItem.title : 'Unknown Title'
             };
-          }).filter(r => r.sku !== '');
+          }).filter(r => r.isbn !== '');
 
           setParsedStockRows(formatted);
           if (formatted.length > 0) {
             setStockStatusMessage({ type: 'success', text: `Successfully parsed ${formatted.length} stock balance records.` });
           } else {
-            setStockStatusMessage({ type: 'error', text: 'No valid records found. Ensure CSV has "sku" and "stockBalance" columns.' });
+            setStockStatusMessage({ type: 'error', text: 'No valid records found. Ensure CSV has "isbn" and "stockBalance" columns.' });
           }
         } catch (err) {
           setStockStatusMessage({ type: 'error', text: 'Failed to parse CSV file format.' });
@@ -73,22 +74,23 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
         try {
           const rows = results.data as any[];
           const formatted = rows.map(row => {
-            const sku = (row.sku || row.SKU || '').trim();
-            const po = Number(row.extraPoStock || row.ExtraPoStock || row.po || row.ExtraPO || 0);
-            const matchedItem = items.find(i => i.sku.toLowerCase() === sku.toLowerCase());
+            const isbn = (row.isbn || row.ISBN || row.sku || row.SKU || '').trim();
+            let po = Number(row.extraPoStock || row.ExtraPoStock || row.po || row.ExtraPO || 0);
+            if (isNaN(po) || po < 0) po = 0;
+            const matchedItem = items.find(i => i.isbn.toLowerCase() === isbn.toLowerCase());
             return {
-              sku,
-              extraPoStock: isNaN(po) ? 0 : po,
+              isbn,
+              extraPoStock: po,
               found: !!matchedItem,
-              name: matchedItem ? matchedItem.name : 'Unknown SKU'
+              title: matchedItem ? matchedItem.title : 'Unknown Title'
             };
-          }).filter(r => r.sku !== '');
+          }).filter(r => r.isbn !== '');
 
           setParsedPoRows(formatted);
           if (formatted.length > 0) {
             setPoStatusMessage({ type: 'success', text: `Successfully parsed ${formatted.length} incoming PO records.` });
           } else {
-            setPoStatusMessage({ type: 'error', text: 'No valid records found. Ensure CSV has "sku" and "extraPoStock" columns.' });
+            setPoStatusMessage({ type: 'error', text: 'No valid records found. Ensure CSV has "isbn" and "extraPoStock" columns.' });
           }
         } catch (err) {
           setPoStatusMessage({ type: 'error', text: 'Failed to parse CSV file format.' });
@@ -137,13 +139,13 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
   };
 
   const handleConfirmStockIngestion = () => {
-    const validUpdates = parsedStockRows.filter(r => r.found).map(r => ({ sku: r.sku, stockBalance: r.stockBalance }));
+    const validUpdates = parsedStockRows.filter(r => r.found).map(r => ({ isbn: r.isbn, stockBalance: r.stockBalance }));
     onApplyStockBalance(validUpdates);
     setStockStatusMessage({ type: 'success', text: `Successfully updated stock balance for ${validUpdates.length} items!` });
   };
 
   const handleConfirmPoIngestion = () => {
-    const validUpdates = parsedPoRows.filter(r => r.found).map(r => ({ sku: r.sku, extraPoStock: r.extraPoStock }));
+    const validUpdates = parsedPoRows.filter(r => r.found).map(r => ({ isbn: r.isbn, extraPoStock: r.extraPoStock }));
     onApplyExtraPo(validUpdates);
     setPoStatusMessage({ type: 'success', text: `Successfully updated incoming PO stock for ${validUpdates.length} items!` });
   };
@@ -154,10 +156,10 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center space-x-2">
           <Upload className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-          <span>Data Ingestion Hub (Phase 1 Upload Modules)</span>
+          <span>Data Ingestion Hub (Minimum Qty Upload Modules)</span>
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Ingest dynamic operational data to instantly recalculate inventory health and shortage deficits. Choose between physical stock balance counts or active purchase orders.
+          Ingest dynamic operational data by ISBN to instantly recalculate inventory health and shortage deficits.
         </p>
 
         {/* Module Switcher Cards */}
@@ -181,7 +183,7 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
                 <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-medium">Physical Counts</span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Upload physical inventory count data (CSV) representing actual warehouse on-hand quantities.
+                Upload physical inventory count data (CSV) representing actual on-hand quantities by ISBN.
               </p>
             </div>
           </button>
@@ -205,7 +207,7 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
                 <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-medium">Incoming Buffer</span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Upload active purchase orders (PO) placed with suppliers but not yet received at warehouse dock.
+                Upload active purchase orders (PO) placed with publishers but not yet received by ISBN.
               </p>
             </div>
           </button>
@@ -222,7 +224,7 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
                 <span>Stock Balance Ingestion Module</span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Upload CSV containing <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-indigo-600">sku</code> and <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-indigo-600">stockBalance</code> columns.
+                Upload CSV containing <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-indigo-600">isbn</code> and <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-indigo-600">stockBalance</code> columns.
               </p>
             </div>
             <button
@@ -248,7 +250,7 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
                   <Upload className="w-6 h-6" />
                 </div>
                 <h4 className="font-semibold text-slate-900 dark:text-white text-sm">Click to upload or drag and drop</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">CSV format with SKU and stock balance data</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">CSV format with ISBN and stock balance data</p>
               </div>
 
               <div>
@@ -262,7 +264,7 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
                     setStockCsvText(e.target.value);
                     handleParseStockCsv(e.target.value);
                   }}
-                  placeholder="sku,stockBalance&#10;SKU-ELE-001,250&#10;SKU-ELE-002,1100"
+                  placeholder="isbn,stockBalance&#10;9781108742719,20&#10;9781108789943,60"
                   className="w-full rounded-xl bg-slate-100 dark:bg-slate-800 border-none p-3 text-xs font-mono text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -310,16 +312,16 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
                   ) : (
                     parsedStockRows.map((row, idx) => (
                       <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
-                        <div>
-                          <span className="font-mono font-bold text-slate-900 dark:text-white">{row.sku}</span>
-                          <span className="text-slate-500 dark:text-slate-400 ml-2">({row.name})</span>
+                        <div className="max-w-[200px]">
+                          <span className="font-mono font-bold text-slate-900 dark:text-white">{row.isbn}</span>
+                          <div className="text-slate-500 dark:text-slate-400 truncate text-[11px]" title={row.title}>{row.title}</div>
                         </div>
-                        <div className="flex items-center space-x-3">
-                          <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{row.stockBalance} pcs</span>
+                        <div className="flex items-center space-x-3 shrink-0">
+                          <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{row.stockBalance} copies</span>
                           {row.found ? (
-                            <span className="w-2 h-2 rounded-full bg-emerald-500" title="SKU matched"></span>
+                            <span className="w-2 h-2 rounded-full bg-emerald-500" title="ISBN matched"></span>
                           ) : (
-                            <span className="w-2 h-2 rounded-full bg-amber-500" title="SKU not found in catalog"></span>
+                            <span className="w-2 h-2 rounded-full bg-amber-500" title="ISBN not found in catalog"></span>
                           )}
                         </div>
                       </div>
@@ -350,7 +352,7 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
                 <span>Extra PO Stock Ingestion Module</span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Upload CSV containing <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-indigo-600">sku</code> and <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-indigo-600">extraPoStock</code> columns.
+                Upload CSV containing <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-indigo-600">isbn</code> and <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-indigo-600">extraPoStock</code> columns.
               </p>
             </div>
             <button
@@ -376,7 +378,7 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
                   <Upload className="w-6 h-6" />
                 </div>
                 <h4 className="font-semibold text-slate-900 dark:text-white text-sm">Click to upload or drag and drop</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">CSV format with SKU and extra PO stock data</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">CSV format with ISBN and extra PO stock data</p>
               </div>
 
               <div>
@@ -390,7 +392,7 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
                     setPoCsvText(e.target.value);
                     handleParsePoCsv(e.target.value);
                   }}
-                  placeholder="sku,extraPoStock&#10;SKU-ELE-001,100&#10;SKU-ELE-002,200"
+                  placeholder="isbn,extraPoStock&#10;9781108742719,15&#10;9781108819558,25"
                   className="w-full rounded-xl bg-slate-100 dark:bg-slate-800 border-none p-3 text-xs font-mono text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
@@ -438,16 +440,16 @@ export const DataIngestionModal: React.FC<DataIngestionModalProps> = ({
                   ) : (
                     parsedPoRows.map((row, idx) => (
                       <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
-                        <div>
-                          <span className="font-mono font-bold text-slate-900 dark:text-white">{row.sku}</span>
-                          <span className="text-slate-500 dark:text-slate-400 ml-2">({row.name})</span>
+                        <div className="max-w-[200px]">
+                          <span className="font-mono font-bold text-slate-900 dark:text-white">{row.isbn}</span>
+                          <div className="text-slate-500 dark:text-slate-400 truncate text-[11px]" title={row.title}>{row.title}</div>
                         </div>
-                        <div className="flex items-center space-x-3">
-                          <span className="font-mono font-bold text-purple-600 dark:text-purple-400">+{row.extraPoStock} pcs</span>
+                        <div className="flex items-center space-x-3 shrink-0">
+                          <span className="font-mono font-bold text-purple-600 dark:text-purple-400">+{row.extraPoStock} copies</span>
                           {row.found ? (
-                            <span className="w-2 h-2 rounded-full bg-emerald-500" title="SKU matched"></span>
+                            <span className="w-2 h-2 rounded-full bg-emerald-500" title="ISBN matched"></span>
                           ) : (
-                            <span className="w-2 h-2 rounded-full bg-amber-500" title="SKU not found in catalog"></span>
+                            <span className="w-2 h-2 rounded-full bg-amber-500" title="ISBN not found in catalog"></span>
                           )}
                         </div>
                       </div>

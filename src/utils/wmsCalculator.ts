@@ -1,14 +1,14 @@
-import { SKUItem } from '../types';
+import { InventoryItem } from '../types';
 
-export interface CalculatedSKU extends SKUItem {
+export interface CalculatedItem extends InventoryItem {
   netDeficit: number;
   reorderQuantity: number;
   isDeficit: boolean;
   totalOrderCost: number;
 }
 
-export function calculateItemDeficit(item: SKUItem): CalculatedSKU {
-  const netDeficit = item.minRequiredStock - item.stockBalance - item.extraPoStock;
+export function calculateItemDeficit(item: InventoryItem): CalculatedItem {
+  const netDeficit = item.minimumQty - item.stockBalance - item.extraPoStock;
   const reorderQuantity = netDeficit > 0 ? netDeficit : 0;
   const isDeficit = netDeficit > 0;
   const totalOrderCost = reorderQuantity * item.unitCost;
@@ -22,19 +22,19 @@ export function calculateItemDeficit(item: SKUItem): CalculatedSKU {
   };
 }
 
-export function calculateWarehouseMetrics(items: SKUItem[]) {
+export function calculateWarehouseMetrics(items: InventoryItem[]) {
   const calculated = items.map(calculateItemDeficit);
-  const totalSkus = calculated.length;
+  const totalItems = calculated.length;
   const deficitItems = calculated.filter(item => item.isDeficit);
   const sufficientItems = calculated.filter(item => !item.isDeficit);
   
-  const totalMinRequiredValue = calculated.reduce((acc, item) => acc + (item.minRequiredStock * item.unitCost), 0);
+  const totalMinRequiredValue = calculated.reduce((acc, item) => acc + (item.minimumQty * item.unitCost), 0);
   const totalStockValue = calculated.reduce((acc, item) => acc + (item.stockBalance * item.unitCost), 0);
   const totalPoValue = calculated.reduce((acc, item) => acc + (item.extraPoStock * item.unitCost), 0);
   const totalReorderCost = calculated.reduce((acc, item) => acc + item.totalOrderCost, 0);
 
   return {
-    totalSkus,
+    totalSkus: totalItems,
     deficitCount: deficitItems.length,
     sufficientCount: sufficientItems.length,
     totalMinRequiredValue,

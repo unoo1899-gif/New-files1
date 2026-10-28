@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { SKUItem, ViewMode } from './types';
-import { INITIAL_SKUS } from './data/initialData';
+import { InventoryItem, ViewMode } from './types';
+import { INITIAL_ITEMS } from './data/initialData';
 import { calculateWarehouseMetrics } from './utils/wmsCalculator';
 import { Header } from './components/Header';
 import { StatsOverview } from './components/StatsOverview';
@@ -12,8 +12,8 @@ import { AiInsightsModal } from './components/AiInsightsModal';
 import { SkuEditorModal } from './components/SkuEditorModal';
 
 export default function App() {
-  const [items, setItems] = useState<SKUItem[]>(() => {
-    const saved = localStorage.getItem('wms_phase1_skus');
+  const [items, setItems] = useState<InventoryItem[]>(() => {
+    const saved = localStorage.getItem('wms_minimum_qty_items');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -21,7 +21,7 @@ export default function App() {
         console.error('Failed to load saved items', e);
       }
     }
-    return INITIAL_SKUS;
+    return INITIAL_ITEMS;
   });
 
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
@@ -29,7 +29,7 @@ export default function App() {
   const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('wms_phase1_skus', JSON.stringify(items));
+    localStorage.setItem('wms_minimum_qty_items', JSON.stringify(items));
   }, [items]);
 
   const metrics = calculateWarehouseMetrics(items);
@@ -50,9 +50,9 @@ export default function App() {
   };
 
   // Apply batch stock balance updates from ingestion module
-  const handleApplyStockBalance = (updates: { sku: string; stockBalance: number }[]) => {
+  const handleApplyStockBalance = (updates: { isbn: string; stockBalance: number }[]) => {
     setItems(prev => prev.map(item => {
-      const match = updates.find(u => u.sku.toLowerCase() === item.sku.toLowerCase());
+      const match = updates.find(u => u.isbn.toLowerCase() === item.isbn.toLowerCase());
       if (match) {
         return {
           ...item,
@@ -65,9 +65,9 @@ export default function App() {
   };
 
   // Apply batch extra PO stock updates from ingestion module
-  const handleApplyExtraPo = (updates: { sku: string; extraPoStock: number }[]) => {
+  const handleApplyExtraPo = (updates: { isbn: string; extraPoStock: number }[]) => {
     setItems(prev => prev.map(item => {
-      const match = updates.find(u => u.sku.toLowerCase() === item.sku.toLowerCase());
+      const match = updates.find(u => u.isbn.toLowerCase() === item.isbn.toLowerCase());
       if (match) {
         return {
           ...item,
@@ -79,10 +79,10 @@ export default function App() {
     }));
   };
 
-  // Simulate placing supplier PO -> adds ordered qty to extraPoStock buffer
-  const handleSimulatePoPlacement = (ordered: { sku: string; orderedQty: number }[]) => {
+  // Simulate placing publisher PO -> adds ordered qty to extraPoStock buffer
+  const handleSimulatePoPlacement = (ordered: { isbn: string; orderedQty: number }[]) => {
     setItems(prev => prev.map(item => {
-      const match = ordered.find(o => o.sku.toLowerCase() === item.sku.toLowerCase());
+      const match = ordered.find(o => o.isbn.toLowerCase() === item.isbn.toLowerCase());
       if (match) {
         return {
           ...item,
@@ -94,21 +94,21 @@ export default function App() {
     }));
   };
 
-  // Add new SKU
-  const handleAddSku = (newItem: SKUItem) => {
+  // Add new Item
+  const handleAddSku = (newItem: InventoryItem) => {
     setItems(prev => [newItem, ...prev]);
   };
 
   // Update thresholds from settings page
-  const handleUpdateThresholds = (updatedList: SKUItem[]) => {
+  const handleUpdateThresholds = (updatedList: InventoryItem[]) => {
     setItems(updatedList);
   };
 
-  // Reset to initial sample data
+  // Reset to initial sample data from Minimum Qty.xlsx
   const handleResetData = () => {
-    if (window.confirm('Reset warehouse inventory data back to default sample state?')) {
-      setItems(INITIAL_SKUS);
-      localStorage.removeItem('wms_phase1_skus');
+    if (window.confirm('Reset inventory data back to default Minimum Qty.xlsx sample state (36 titles)?')) {
+      setItems(INITIAL_ITEMS);
+      localStorage.removeItem('wms_minimum_qty_items');
     }
   };
 
@@ -189,7 +189,7 @@ export default function App() {
         />
       )}
 
-      {/* Add SKU Modal */}
+      {/* Add Title Modal */}
       {showAddModal && (
         <SkuEditorModal
           onAddSku={handleAddSku}

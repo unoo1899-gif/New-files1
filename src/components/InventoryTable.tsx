@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { CalculatedSKU } from '../utils/wmsCalculator';
+import { CalculatedItem } from '../utils/wmsCalculator';
 import { Search, Filter, AlertTriangle, CheckCircle2, Download, Printer, Plus, Edit3 } from 'lucide-react';
 
 interface InventoryTableProps {
-  items: CalculatedSKU[];
+  items: CalculatedItem[];
   onUpdateItemStock: (id: string, newBalance: number, newPo: number) => void;
   onOpenAddModal: () => void;
   onNavigateToIngestion: () => void;
@@ -30,8 +30,8 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
   // Filter items
   const filteredItems = items.filter(item => {
     const matchesSearch = 
-      item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.isbn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.supplier.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
@@ -43,7 +43,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
     return matchesSearch && matchesCategory && matchesFilter;
   });
 
-  const handleStartEdit = (item: CalculatedSKU) => {
+  const handleStartEdit = (item: CalculatedItem) => {
     setEditingId(item.id);
     setEditBalance(item.stockBalance);
     setEditPo(item.extraPoStock);
@@ -55,13 +55,13 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
   };
 
   const exportCsv = () => {
-    const headers = ['SKU', 'Item Name', 'Category', 'Supplier', 'Min Required Stock', 'Stock Balance', 'Extra PO Stock', 'Net Deficit (Not Sufficient)', 'Unit Cost ($)', 'Total Reorder Cost ($)'];
+    const headers = ['ISBN', 'Title', 'Category', 'Supplier', 'Minimum Qty', 'Stock Balance', 'Extra PO Stock', 'Net Deficit (Not Sufficient)', 'Unit Cost ($)', 'Total Reorder Cost ($)'];
     const rows = filteredItems.map(item => [
-      item.sku,
-      `"${item.name}"`,
+      item.isbn,
+      `"${item.title}"`,
       item.category,
       `"${item.supplier}"`,
-      item.minRequiredStock,
+      item.minimumQty,
       item.stockBalance,
       item.extraPoStock,
       item.reorderQuantity,
@@ -73,7 +73,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `wms_shortage_report_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `wms_minimum_qty_report_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -90,11 +90,11 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
             <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center space-x-2">
               <span>Inventory Shortage & Replenishment Report</span>
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-semibold border border-indigo-200 dark:border-indigo-800">
-                Phase 1 Output
+                Minimum Qty.xlsx Data
               </span>
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              Real-time calculation: Net Deficit = Min Required - Stock Balance - Extra PO Stock
+              Net Deficit = Minimum Qty - Stock Balance - Extra PO Stock
             </p>
           </div>
 
@@ -118,7 +118,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
               className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium shadow-sm transition-colors flex items-center space-x-1.5"
             >
               <Plus className="w-4 h-4" />
-              <span>Add SKU</span>
+              <span>Add Title</span>
             </button>
           </div>
         </div>
@@ -135,7 +135,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              All Items ({items.length})
+              All Titles ({items.length})
             </button>
             <button
               onClick={() => setFilterMode('deficit')}
@@ -163,11 +163,11 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
 
           {/* Search & Category filter */}
           <div className="flex items-center space-x-2">
-            <div className="relative flex-1 sm:w-64">
+            <div className="relative flex-1 sm:w-72">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search SKU, name, supplier..."
+                placeholder="Search ISBN, title, supplier..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border-none text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -196,9 +196,9 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              <th className="py-3.5 px-4">SKU / Item Description</th>
+              <th className="py-3.5 px-4">ISBN & Title</th>
               <th className="py-3.5 px-4">Supplier</th>
-              <th className="py-3.5 px-4 text-center">Min Required</th>
+              <th className="py-3.5 px-4 text-center">Minimum Qty</th>
               <th className="py-3.5 px-4 text-center">Stock Balance</th>
               <th className="py-3.5 px-4 text-center">Extra PO Stock</th>
               <th className="py-3.5 px-4 text-center">Net Deficit (Not Sufficient)</th>
@@ -225,10 +225,12 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                       item.isDeficit ? 'bg-rose-50/30 dark:bg-rose-950/10' : ''
                     }`}
                   >
-                    {/* SKU & Name */}
-                    <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-900 dark:text-white">{item.sku}</div>
-                      <div className="text-xs text-slate-600 dark:text-slate-400">{item.name}</div>
+                    {/* ISBN & Title */}
+                    <td className="py-3.5 px-4 max-w-xs">
+                      <div className="font-mono font-bold text-slate-900 dark:text-white text-xs">{item.isbn}</div>
+                      <div className="text-xs text-slate-700 dark:text-slate-300 font-medium mt-0.5 truncate" title={item.title}>
+                        {item.title}
+                      </div>
                       <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                         {item.category}
                       </span>
@@ -236,13 +238,13 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
 
                     {/* Supplier */}
                     <td className="py-3.5 px-4">
-                      <div className="text-slate-700 dark:text-slate-300 font-medium">{item.supplier}</div>
-                      <div className="text-xs text-slate-400">{item.leadTimeDays}d lead time</div>
+                      <div className="text-slate-700 dark:text-slate-300 font-medium text-xs">{item.supplier}</div>
+                      <div className="text-[11px] text-slate-400">{item.leadTimeDays}d lead time</div>
                     </td>
 
-                    {/* Min Required Stock */}
+                    {/* Minimum Qty */}
                     <td className="py-3.5 px-4 text-center font-mono font-bold text-slate-900 dark:text-white">
-                      {item.minRequiredStock}
+                      {item.minimumQty}
                     </td>
 
                     {/* Stock Balance (editable) */}
@@ -348,7 +350,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
       {/* Footer Info */}
       <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 dark:text-slate-400 gap-2">
         <div>
-          Showing {filteredItems.length} of {items.length} total inventory items
+          Showing {filteredItems.length} of {items.length} total inventory items from Minimum Qty.xlsx
         </div>
         <div className="flex items-center space-x-4">
           <button onClick={onNavigateToIngestion} className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
