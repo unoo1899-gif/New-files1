@@ -1,3 +1,14 @@
+export type UserRole = 'admin' | 'user';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface InventoryItem {
   id: string;
   isbn: string;
@@ -23,4 +34,4 @@ export interface ExtraPoUploadRow {
   extraPoStock: number;
 }
 
-export type ViewMode = 'dashboard' | 'inventory' | 'ingestion' | 'reorders' | 'settings';
+export type ViewMode = 'dashboard' | 'inventory' | 'ingestion' | 'reorders' | 'settings' | 'users';

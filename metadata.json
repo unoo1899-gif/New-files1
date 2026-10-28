@@ -1,6 +1,6 @@
 {
-  "name": "WMS Pro - Phase 1 Order Management",
-  "description": "Warehouse Management System for inventory health, shortage calculation, and automated supplier reorder generation.",
+  "name": "Emo Book Service Sdn Bhd - WMS Phase 1",
+  "description": "Warehouse Management System for Emo Book Service Sdn Bhd inventory health, shortage calculation, and automated publisher reorder generation.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

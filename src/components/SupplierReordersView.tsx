@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CalculatedItem } from '../utils/wmsCalculator';
-import { Truck, DollarSign, Send, CheckCircle2, FileText, Printer, Building2, Package } from 'lucide-react';
+import { sendReorderReportEmail, ADMIN_EMAIL } from '../services/emailService';
+import { Truck, DollarSign, Send, CheckCircle2, FileText, Printer, Building2, Package, Mail } from 'lucide-react';
 
 interface SupplierReordersViewProps {
   items: CalculatedItem[];
@@ -13,6 +14,7 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
 }) => {
   const [orderedSuppliers, setOrderedSuppliers] = useState<Record<string, boolean>>({});
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [emailSending, setEmailSending] = useState(false);
 
   // Filter only items with deficit
   const deficitItems = items.filter(item => item.isDeficit);
@@ -42,6 +44,19 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
     setOrderedSuppliers(prev => ({ ...prev, [supplierName]: true }));
     setSuccessMessage(`Purchase Order ${poNumber} successfully generated and transmitted to ${supplierName}! (Added to Extra PO Stock buffer)`);
     setTimeout(() => setSuccessMessage(null), 5000);
+  };
+
+  const handleEmailReport = async () => {
+    setEmailSending(true);
+    try {
+      await sendReorderReportEmail(items);
+      setSuccessMessage(`Reorder report successfully dispatched via email to Admin (${ADMIN_EMAIL})!`);
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (e) {
+      setSuccessMessage('Failed to send email notification.');
+    } finally {
+      setEmailSending(false);
+    }
   };
 
   const downloadPoCsv = (supplierName: string, poNumber: string, itemsList: CalculatedItem[], leadTime: number) => {
@@ -74,26 +89,38 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center space-x-2">
               <Truck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              <span>Supplier Reorder Management (Minimum Qty.xlsx)</span>
+              <span>Supplier Reorder Management (Emo Book Service Sdn Bhd)</span>
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Aggregating items with positive deficit values (&gt; 0) and grouping by publisher to generate purchase orders.
             </p>
           </div>
 
-          <div className="flex items-center space-x-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-900 px-4 py-3 rounded-2xl">
-            <div>
-              <div className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Total Reorder Investment</div>
-              <div className="text-xl font-extrabold text-indigo-700 dark:text-indigo-300">
-                ${grandTotalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              disabled={emailSending || deficitItems.length === 0}
+              onClick={handleEmailReport}
+              className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-medium text-sm shadow-md shadow-purple-600/20 transition-all flex items-center space-x-2 cursor-pointer"
+              title={`Send report to ${ADMIN_EMAIL}`}
+            >
+              <Mail className="w-4 h-4" />
+              <span>{emailSending ? 'Sending Email...' : `Email Report to Admin (${ADMIN_EMAIL})`}</span>
+            </button>
+
+            <div className="flex items-center space-x-3 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-900 px-4 py-2.5 rounded-2xl">
+              <div>
+                <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium uppercase tracking-wider">Total Investment</div>
+                <div className="text-lg font-extrabold text-indigo-700 dark:text-indigo-300">
+                  ${grandTotalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
               </div>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
-              {grandTotalUnits}
+              <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+                {grandTotalUnits}
+              </div>
             </div>
           </div>
         </div>
@@ -114,7 +141,7 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
           </div>
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">All Stock Levels are Sufficient!</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
-            There are currently no items with a positive net deficit against the minimum quantity threshold of 50.
+            There are currently no titles with a positive net deficit against the minimum quantity threshold of 50.
           </p>
         </div>
       ) : (
@@ -158,7 +185,7 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => downloadPoCsv(group.supplier, poNumber, group.items, group.leadTimeDays)}
-                        className="px-3 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-sm font-medium transition-all flex items-center space-x-1.5"
+                        className="px-3 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-sm font-medium transition-all flex items-center space-x-1.5 cursor-pointer"
                         title="Download Purchase Order CSV"
                       >
                         <FileText className="w-4 h-4" />
@@ -167,7 +194,7 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
 
                       <button
                         onClick={() => handlePlaceOrder(group.supplier, group.items, poNumber)}
-                        className={`px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md transition-all flex items-center space-x-2 ${
+                        className={`px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md transition-all flex items-center space-x-2 cursor-pointer ${
                           isOrdered
                             ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
                             : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30'
@@ -227,7 +254,7 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
                   </div>
                   <button
                     onClick={() => window.print()}
-                    className="flex items-center space-x-1 hover:text-indigo-600 dark:hover:text-indigo-400"
+                    className="flex items-center space-x-1 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer"
                   >
                     <Printer className="w-3.5 h-3.5" />
                     <span>Print PO</span>

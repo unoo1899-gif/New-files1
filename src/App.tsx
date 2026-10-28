@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { InventoryItem, ViewMode } from './types';
-import { INITIAL_ITEMS } from './data/initialData';
+import { InventoryItem, ViewMode, User } from './types';
+import { INITIAL_ITEMS, INITIAL_USERS } from './data/initialData';
 import { calculateWarehouseMetrics } from './utils/wmsCalculator';
 import { Header } from './components/Header';
 import { StatsOverview } from './components/StatsOverview';
@@ -10,16 +10,38 @@ import { SupplierReordersView } from './components/SupplierReordersView';
 import { ThresholdSettings } from './components/ThresholdSettings';
 import { AiInsightsModal } from './components/AiInsightsModal';
 import { SkuEditorModal } from './components/SkuEditorModal';
+import { SignInView } from './components/auth/SignInView';
+import { SignUpView } from './components/auth/SignUpView';
+import { ForgotPasswordView } from './components/auth/ForgotPasswordView';
+import { UserManagementModal } from './components/UserManagementModal';
 
 export default function App() {
+  // Auth page route when not signed in: 'signin' | 'signup' | 'forgot'
+  const [authRoute, setAuthRoute] = useState<'signin' | 'signup' | 'forgot'>('signin');
+
+  // Users state
+  const [users, setUsers] = useState<User[]>(() => {
+    const saved = localStorage.getItem('wms_users_list');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return INITIAL_USERS;
+  });
+
+  // Current logged in user (null if not logged in)
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('wms_current_user');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return INITIAL_USERS[0]; // Default admin session for instant testing
+  });
+
+  // Inventory items state
   const [items, setItems] = useState<InventoryItem[]>(() => {
     const saved = localStorage.getItem('wms_minimum_qty_items');
     if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to load saved items', e);
-      }
+      try { return JSON.parse(saved); } catch (e) {}
     }
     return INITIAL_ITEMS;
   });
@@ -27,12 +49,46 @@ export default function App() {
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
   const [showAiModal, setShowAiModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('wms_minimum_qty_items', JSON.stringify(items));
   }, [items]);
 
+  useEffect(() => {
+    localStorage.setItem('wms_users_list', JSON.stringify(users));
+  }, [users]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('wms_current_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('wms_current_user');
+    }
+  }, [currentUser]);
+
   const metrics = calculateWarehouseMetrics(items);
+
+  // Auth Handlers
+  const handleLogin = (user: User) => {
+    setCurrentUser(user);
+    setCurrentView('dashboard');
+  };
+
+  const handleSignUp = (newUser: User) => {
+    const updated = [...users, newUser];
+    setUsers(updated);
+    setCurrentUser(newUser);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setAuthRoute('signin');
+  };
+
+  const handleUpdateUsers = (updatedList: User[]) => {
+    setUsers(updatedList);
+  };
 
   // Update single item stock balance & PO stock
   const handleUpdateItemStock = (id: string, newBalance: number, newPo: number) => {
@@ -112,6 +168,35 @@ export default function App() {
     }
   };
 
+  // Render Authentication Pages if not signed in
+  if (!currentUser || !currentUser.isActive) {
+    if (authRoute === 'signup') {
+      return (
+        <SignUpView
+          users={users}
+          onSignUp={handleSignUp}
+          onNavigateToSignIn={() => setAuthRoute('signin')}
+        />
+      );
+    }
+    if (authRoute === 'forgot') {
+      return (
+        <ForgotPasswordView
+          onNavigateToSignIn={() => setAuthRoute('signin')}
+        />
+      );
+    }
+    return (
+      <SignInView
+        users={users}
+        onLogin={handleLogin}
+        onNavigateToSignUp={() => setAuthRoute('signup')}
+        onNavigateToForgot={() => setAuthRoute('forgot')}
+      />
+    );
+  }
+
+  // Front Page / Dashboard Workspace (`/dashboard`)
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-600 selection:text-white pb-16">
       {/* Navigation Header */}
@@ -120,6 +205,9 @@ export default function App() {
         onViewChange={setCurrentView}
         onOpenAiInsights={() => setShowAiModal(true)}
         onResetData={handleResetData}
+        onOpenUserManagement={() => setShowUserModal(true)}
+        onLogout={handleLogout}
+        currentUser={currentUser}
         deficitCount={metrics.deficitCount}
       />
 
@@ -194,6 +282,16 @@ export default function App() {
         <SkuEditorModal
           onAddSku={handleAddSku}
           onClose={() => setShowAddModal(false)}
+        />
+      )}
+
+      {/* User Management Modal */}
+      {showUserModal && currentUser.role === 'admin' && (
+        <UserManagementModal
+          users={users}
+          currentUser={currentUser}
+          onUpdateUsers={handleUpdateUsers}
+          onClose={() => setShowUserModal(false)}
         />
       )}
     </div>

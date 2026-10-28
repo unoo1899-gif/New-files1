@@ -1,4 +1,23 @@
-import { InventoryItem } from '../types';
+import { InventoryItem, User } from '../types';
+
+export const INITIAL_USERS: User[] = [
+  {
+    id: 'u-1',
+    email: 'admin@wms.com',
+    name: 'Warehouse Administrator',
+    role: 'admin',
+    isActive: true,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'u-2',
+    email: 'user@wms.com',
+    name: 'Operations Staff',
+    role: 'user',
+    isActive: true,
+    createdAt: new Date().toISOString()
+  }
+];
 
 export const INITIAL_ITEMS: InventoryItem[] = [
   {
