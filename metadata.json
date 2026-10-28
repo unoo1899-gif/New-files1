@@ -1,6 +1,8 @@
 {
-  "name": "Emo Book Service Sdn Bhd - WMS Phase 1",
+  "name": "Emo Book Service Sdn Bhd - WMS",
   "description": "Warehouse Management System for Emo Book Service Sdn Bhd inventory health, shortage calculation, and automated publisher reorder generation.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

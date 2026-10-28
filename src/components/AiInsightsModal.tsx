@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { GoogleGenAI } from '@google/genai';
 import { CalculatedItem } from '../utils/wmsCalculator';
 import { Sparkles, X, BrainCircuit, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react';
 
@@ -18,13 +17,10 @@ export const AiInsightsModal: React.FC<AiInsightsModalProps> = ({ items, onClose
     setError(null);
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY || (window as any).GEMINI_API_KEY || '';
-      const ai = new GoogleGenAI({ apiKey });
-
       const deficitItems = items.filter(i => i.isDeficit);
       const totalCost = deficitItems.reduce((acc, i) => acc + i.totalOrderCost, 0);
 
-      const prompt = `You are an expert Supply Chain and Inventory Management AI Advisor for educational book publishing & distribution. 
+      const prompt = `You are an expert Supply Chain and Inventory Management AI Advisor for educational book publishing & distribution (Emo Book Service Sdn Bhd). 
 Analyze the following WMS Minimum Qty inventory data (36 textbook titles with minimum quantity threshold = 50) and provide strategic recommendations:
 
 Total Titles: ${items.length}
@@ -51,15 +47,23 @@ Please provide:
 
 Format your response cleanly with clear headings and bullet points in Markdown.`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt
+      // Call server-side API endpoint instead of direct browser SDK call
+      const res = await fetch('/api/ai-insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items, prompt })
       });
 
-      setAnalysis(response.text || 'No analysis generated.');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Server responded with status ${res.status}`);
+      }
+
+      const data = await res.json();
+      setAnalysis(data.text || 'No analysis generated.');
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Failed to connect to Gemini API. Ensure GEMINI_API_KEY is configured.');
+      setError(err.message || 'Failed to connect to server AI endpoint.');
       setAnalysis(`### Textbook Inventory AI Operational Analysis (Fallback Mode)
 
 1. **Executive Summary**: 
@@ -91,7 +95,7 @@ Format your response cleanly with clear headings and bullet points in Markdown.`
               <Sparkles className="w-5 h-5 text-purple-200" />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-white">Gemini AI Textbook Intelligence</h3>
+              <h3 className="font-bold text-lg text-white">Gemini AI Textbook Intelligence (Server-Side)</h3>
               <p className="text-xs text-slate-400">Minimum Qty stock health & publisher reorder strategy advisor</p>
             </div>
           </div>
@@ -108,7 +112,7 @@ Format your response cleanly with clear headings and bullet points in Markdown.`
           {loading ? (
             <div className="py-16 text-center space-y-4">
               <div className="w-12 h-12 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin mx-auto"></div>
-              <p className="text-sm font-medium text-slate-300">Analyzing textbook inventory levels & publishing supply chain risks...</p>
+              <p className="text-sm font-medium text-slate-300">Analyzing textbook inventory levels via secure backend server...</p>
             </div>
           ) : (
             <div className="space-y-4">
