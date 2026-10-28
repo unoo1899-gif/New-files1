@@ -169,7 +169,7 @@ export const SupplierReordersView: React.FC<SupplierReordersViewProps> = ({
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Estimated Lead Time: <span className="font-semibold text-slate-700 dark:text-slate-300">{group.leadTimeDays} business days</span> &bull; {group.items.length} titles requiring replenishment
+                        Estimated Lead Time: <span className="font-semibold text-slate-700 dark:text-slate-300">2 months</span> &bull; {group.items.length} titles requiring replenishment
                       </p>
                     </div>
                   </div>

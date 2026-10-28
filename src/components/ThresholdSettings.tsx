@@ -102,7 +102,7 @@ export const ThresholdSettings: React.FC<ThresholdSettingsProps> = ({
                 <th className="py-3.5 px-4">ISBN & Title</th>
                 <th className="py-3.5 px-4">Supplier</th>
                 <th className="py-3.5 px-4 text-center">Minimum Qty (Baseline)</th>
-                <th className="py-3.5 px-4 text-center">Lead Time (Days)</th>
+                <th className="py-3.5 px-4 text-center">Lead Time (Months)</th>
                 <th className="py-3.5 px-4 text-right">Unit Cost ($)</th>
               </tr>
             </thead>

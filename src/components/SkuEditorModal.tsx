@@ -162,7 +162,7 @@ export const SkuEditorModal: React.FC<SkuEditorModalProps> = ({ onAddSku, onClos
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Lead Time (Days)</label>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Lead Time (Months)</label>
               <input
                 type="number"
                 required

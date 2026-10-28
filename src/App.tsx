@@ -14,12 +14,11 @@ import { SignInView } from './components/auth/SignInView';
 import { SignUpView } from './components/auth/SignUpView';
 import { ForgotPasswordView } from './components/auth/ForgotPasswordView';
 import { UserManagementModal } from './components/UserManagementModal';
+import { EtaReportView } from './components/EtaReportView';
 
 export default function App() {
-  // Auth page route when not signed in: 'signin' | 'signup' | 'forgot'
   const [authRoute, setAuthRoute] = useState<'signin' | 'signup' | 'forgot'>('signin');
 
-  // Users state
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem('wms_users_list');
     if (saved) {
@@ -28,16 +27,14 @@ export default function App() {
     return INITIAL_USERS;
   });
 
-  // Current logged in user (null if not logged in)
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('wms_current_user');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
-    return INITIAL_USERS[0]; // Default admin session for instant testing
+    return INITIAL_USERS[0];
   });
 
-  // Inventory items state
   const [items, setItems] = useState<InventoryItem[]>(() => {
     const saved = localStorage.getItem('wms_minimum_qty_items');
     if (saved) {
@@ -69,7 +66,6 @@ export default function App() {
 
   const metrics = calculateWarehouseMetrics(items);
 
-  // Auth Handlers
   const handleLogin = (user: User) => {
     setCurrentUser(user);
     setCurrentView('dashboard');
@@ -90,7 +86,6 @@ export default function App() {
     setUsers(updatedList);
   };
 
-  // Update single item stock balance & PO stock
   const handleUpdateItemStock = (id: string, newBalance: number, newPo: number) => {
     setItems(prev => prev.map(item => {
       if (item.id === id) {
@@ -105,7 +100,6 @@ export default function App() {
     }));
   };
 
-  // Apply batch stock balance updates from ingestion module
   const handleApplyStockBalance = (updates: { isbn: string; stockBalance: number }[]) => {
     setItems(prev => prev.map(item => {
       const match = updates.find(u => u.isbn.toLowerCase() === item.isbn.toLowerCase());
@@ -120,7 +114,6 @@ export default function App() {
     }));
   };
 
-  // Apply batch extra PO stock updates from ingestion module
   const handleApplyExtraPo = (updates: { isbn: string; extraPoStock: number }[]) => {
     setItems(prev => prev.map(item => {
       const match = updates.find(u => u.isbn.toLowerCase() === item.isbn.toLowerCase());
@@ -135,7 +128,6 @@ export default function App() {
     }));
   };
 
-  // Simulate placing publisher PO -> adds ordered qty to extraPoStock buffer
   const handleSimulatePoPlacement = (ordered: { isbn: string; orderedQty: number }[]) => {
     setItems(prev => prev.map(item => {
       const match = ordered.find(o => o.isbn.toLowerCase() === item.isbn.toLowerCase());
@@ -150,17 +142,14 @@ export default function App() {
     }));
   };
 
-  // Add new Item
   const handleAddSku = (newItem: InventoryItem) => {
     setItems(prev => [newItem, ...prev]);
   };
 
-  // Update thresholds from settings page
   const handleUpdateThresholds = (updatedList: InventoryItem[]) => {
     setItems(updatedList);
   };
 
-  // Reset to initial sample data from Minimum Qty.xlsx
   const handleResetData = () => {
     if (window.confirm('Reset inventory data back to default Minimum Qty.xlsx sample state (36 titles)?')) {
       setItems(INITIAL_ITEMS);
@@ -168,7 +157,6 @@ export default function App() {
     }
   };
 
-  // Render Authentication Pages if not signed in
   if (!currentUser || !currentUser.isActive) {
     if (authRoute === 'signup') {
       return (
@@ -196,10 +184,8 @@ export default function App() {
     );
   }
 
-  // Front Page / Dashboard Workspace (`/dashboard`)
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-600 selection:text-white pb-16">
-      {/* Navigation Header */}
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-[#eb7f31] selection:text-white pb-16">
       <Header
         currentView={currentView}
         onViewChange={setCurrentView}
@@ -211,7 +197,6 @@ export default function App() {
         deficitCount={metrics.deficitCount}
       />
 
-      {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
         {currentView === 'dashboard' && (
           <div className="space-y-8">
@@ -245,6 +230,10 @@ export default function App() {
           />
         )}
 
+        {currentView === 'eta' && (
+          <EtaReportView items={items} />
+        )}
+
         {currentView === 'ingestion' && (
           <DataIngestionModal
             items={items}
@@ -269,7 +258,6 @@ export default function App() {
         )}
       </main>
 
-      {/* AI Insights Modal */}
       {showAiModal && (
         <AiInsightsModal
           items={metrics.calculatedItems}
@@ -277,7 +265,6 @@ export default function App() {
         />
       )}
 
-      {/* Add Title Modal */}
       {showAddModal && (
         <SkuEditorModal
           onAddSku={handleAddSku}
@@ -285,7 +272,6 @@ export default function App() {
         />
       )}
 
-      {/* User Management Modal */}
       {showUserModal && currentUser.role === 'admin' && (
         <UserManagementModal
           users={users}

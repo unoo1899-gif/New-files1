@@ -34,4 +34,4 @@ export interface ExtraPoUploadRow {
   extraPoStock: number;
 }
 
-export type ViewMode = 'dashboard' | 'inventory' | 'ingestion' | 'reorders' | 'settings' | 'users';
+export type ViewMode = 'dashboard' | 'inventory' | 'ingestion' | 'reorders' | 'settings' | 'users' | 'eta';

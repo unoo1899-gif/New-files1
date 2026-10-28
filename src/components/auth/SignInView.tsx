@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User } from '../../types';
-import { Warehouse, Mail, Lock, ArrowRight, Shield, User as UserIcon } from 'lucide-react';
+import { Warehouse, Mail, Lock, ArrowRight } from 'lucide-react';
 
 interface SignInViewProps {
   users: User[];
@@ -38,50 +38,16 @@ export const SignInView: React.FC<SignInViewProps> = ({
     onLogin(found);
   };
 
-  const handleQuickDemo = (demoEmail: string) => {
-    const found = users.find(u => u.email === demoEmail);
-    if (found) onLogin(found);
-  };
-
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-8 animate-fadeIn">
         <div className="text-center space-y-3">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center mx-auto shadow-xl shadow-indigo-600/30 text-white">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#eb7f31] to-[#e45742] flex items-center justify-center mx-auto shadow-xl shadow-orange-600/30 text-white">
             <Warehouse className="w-8 h-8" />
           </div>
           <div>
             <h1 className="text-2xl font-extrabold text-white tracking-tight">Emo Book Service</h1>
-            <p className="text-xs text-slate-400 mt-1">Warehouse Management & Replenishment System (WMS Phase 1)</p>
-          </div>
-        </div>
-
-        {/* Quick Demo Accounts */}
-        <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 space-y-3">
-          <div className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">Quick Demo Access</div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('admin@wms.com')}
-              className="p-2.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-left transition-all cursor-pointer"
-            >
-              <div className="text-xs font-bold text-white flex items-center space-x-1">
-                <Shield className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Admin</span>
-              </div>
-              <div className="text-[10px] text-slate-400 mt-0.5 truncate">admin@wms.com</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickDemo('user@wms.com')}
-              className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-left transition-all cursor-pointer"
-            >
-              <div className="text-xs font-bold text-white flex items-center space-x-1">
-                <UserIcon className="w-3.5 h-3.5 text-slate-400" />
-                <span>Staff</span>
-              </div>
-              <div className="text-[10px] text-slate-400 mt-0.5 truncate">user@wms.com</div>
-            </button>
+            <p className="text-xs text-slate-400 mt-1">Warehouse Management System (WMS Phase 1)</p>
           </div>
         </div>
 
@@ -102,7 +68,7 @@ export const SignInView: React.FC<SignInViewProps> = ({
                 placeholder="name@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#eb7f31]"
               />
             </div>
           </div>
@@ -113,7 +79,7 @@ export const SignInView: React.FC<SignInViewProps> = ({
               <button
                 type="button"
                 onClick={onNavigateToForgot}
-                className="text-xs text-indigo-400 hover:underline"
+                className="text-xs text-[#eb7f31] hover:underline"
               >
                 Forgot password?
               </button>
@@ -126,14 +92,14 @@ export const SignInView: React.FC<SignInViewProps> = ({
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#eb7f31]"
               />
             </div>
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center space-x-2 cursor-pointer"
+            className="w-full py-3 rounded-xl bg-[#eb7f31] hover:bg-orange-600 text-white font-semibold text-sm shadow-lg shadow-orange-600/30 transition-all flex items-center justify-center space-x-2 cursor-pointer"
           >
             <span>Sign In</span>
             <ArrowRight className="w-4 h-4" />
@@ -145,7 +111,7 @@ export const SignInView: React.FC<SignInViewProps> = ({
           <button
             type="button"
             onClick={onNavigateToSignUp}
-            className="text-indigo-400 hover:underline font-semibold ml-1 cursor-pointer"
+            className="text-[#eb7f31] hover:underline font-semibold ml-1 cursor-pointer"
           >
             Sign up now
           </button>

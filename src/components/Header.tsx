@@ -1,6 +1,6 @@
 import React from 'react';
 import { ViewMode, User } from '../types';
-import { Warehouse, LayoutDashboard, Database, UploadCloud, Truck, Settings, Sparkles, RefreshCw, Users, LogOut, Shield, User as UserIcon } from 'lucide-react';
+import { Warehouse, LayoutDashboard, Database, UploadCloud, Truck, Settings, Sparkles, RefreshCw, Users, LogOut, Shield, User as UserIcon, Clock } from 'lucide-react';
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -49,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
           <nav className="hidden lg:flex items-center space-x-1">
             <button
               onClick={() => onViewChange('dashboard')}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                 currentView === 'dashboard'
                   ? 'bg-[#eb7f31] text-white shadow-sm'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
@@ -61,7 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={() => onViewChange('inventory')}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                 currentView === 'inventory'
                   ? 'bg-[#eb7f31] text-white shadow-sm'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
@@ -77,20 +77,32 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <button
+              onClick={() => onViewChange('eta')}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                currentView === 'eta'
+                  ? 'bg-[#eb7f31] text-white shadow-sm'
+                  : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              <span>ETA Report</span>
+            </button>
+
+            <button
               onClick={() => onViewChange('ingestion')}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                 currentView === 'ingestion'
                   ? 'bg-[#eb7f31] text-white shadow-sm'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
               }`}
             >
               <UploadCloud className="w-4 h-4" />
-              <span>Data Ingestion Hub</span>
+              <span>Data Ingestion</span>
             </button>
 
             <button
               onClick={() => onViewChange('reorders')}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                 currentView === 'reorders'
                   ? 'bg-[#eb7f31] text-white shadow-sm'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
@@ -102,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={() => onViewChange('settings')}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                 currentView === 'settings'
                   ? 'bg-[#eb7f31] text-white shadow-sm'
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
@@ -115,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({
             {isAdmin && (
               <button
                 onClick={onOpenUserManagement}
-                className="flex items-center space-x-2 px-3.5 py-2 rounded-xl text-sm font-medium text-[#fcad38] hover:bg-slate-800 transition-colors"
+                className="flex items-center space-x-2 px-3 py-2 rounded-xl text-sm font-medium text-[#fcad38] hover:bg-slate-800 transition-colors"
               >
                 <Users className="w-4 h-4" />
                 <span>Users</span>
@@ -184,6 +196,13 @@ export const Header: React.FC<HeaderProps> = ({
                 {deficitCount}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => onViewChange('eta')}
+            className={`flex flex-col items-center py-1 px-2 rounded ${currentView === 'eta' ? 'text-[#eb7f31] font-bold' : 'text-slate-400'}`}
+          >
+            <Clock className="w-4 h-4 mb-0.5" />
+            ETA
           </button>
           <button
             onClick={() => onViewChange('ingestion')}

@@ -239,7 +239,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({
                     {/* Supplier */}
                     <td className="py-3.5 px-4">
                       <div className="text-slate-700 dark:text-slate-300 font-medium text-xs">{item.supplier}</div>
-                      <div className="text-[11px] text-slate-400">{item.leadTimeDays}d lead time</div>
+                      <div className="text-[11px] text-slate-400">2 months lead time</div>
                     </td>
 
                     {/* Minimum Qty */}
